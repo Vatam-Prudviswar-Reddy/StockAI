@@ -62,7 +62,7 @@ function App() {
     const fetchMarketData = () => {
 
       fetch(
-        "http://127.0.0.1:8000/market-movers"
+        "https://stockai-backend-xzm4.onrender.com/market-movers"
       )
         .then((res) => res.json())
 
@@ -99,7 +99,7 @@ function App() {
   useEffect(() => {
 
     fetch(
-      "http://127.0.0.1:8000/trending"
+      "https://stockai-backend-xzm4.onrender.com/trending"
     )
       .then((res) => res.json())
 
@@ -137,7 +137,7 @@ function App() {
 
       const response = await fetch(
 
-        `http://127.0.0.1:8000/search/${value}`
+        `https://stockai-backend-xzm4.onrender.com/search/${value}`
 
       );
 
@@ -165,7 +165,7 @@ function App() {
 
     const response = await fetch(
 
-      `http://127.0.0.1:8000/stock/${ticker}`
+      `https://stockai-backend-xzm4.onrender.com/stock/${ticker}`
 
     );
 
