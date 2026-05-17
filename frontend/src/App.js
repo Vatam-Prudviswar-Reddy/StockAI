@@ -57,42 +57,81 @@ function App() {
 
   // Fetch Market Movers
 
-  useEffect(() => {
 
-    const fetchMarketData = () => {
+useEffect(() => {
 
-      fetch(
+  const fetchMarketData = async () => {
+
+    try {
+
+      const response = await fetch(
+
         "https://stockai-backend-xzm4.onrender.com/market-movers"
-      )
-        .then((res) => res.json())
 
-        .then((data) => {
+      );
 
-          setMarketMovers(data);
+      const data = await response.json();
 
-        })
+      if (
 
-        .catch(() => {
+        data.error ||
 
-          setError(
-            "⚠️ Unable to fetch market data"
-          );
+        !data.gainers ||
+
+        !data.losers
+
+      ) {
+
+        setMarketMovers({
+
+          gainers: [],
+
+          losers: [],
+
+          error: true
 
         });
 
-    };
+        return;
+      }
+
+      setMarketMovers({
+
+        gainers: data.gainers,
+
+        losers: data.losers,
+
+        error: false
+
+      });
+
+    } catch {
+
+      setMarketMovers({
+
+        gainers: [],
+
+        losers: [],
+
+        error: true
+
+      });
+
+    }
+
+  };
+
+  fetchMarketData();
+
+  const interval = setInterval(() => {
 
     fetchMarketData();
 
-    const interval = setInterval(() => {
+  }, 30000);
 
-      fetchMarketData();
+  return () => clearInterval(interval);
 
-    }, 15000);
-
-    return () => clearInterval(interval);
-
-  }, []);
+}, []);
 
   // Trending Stocks
 
@@ -591,6 +630,17 @@ function App() {
         </div>
 
       </div>
+
+      {marketMovers.error && (
+
+  <div className="error-banner">
+
+    ⚠️ Live market movers are
+    temporarily unavailable.
+
+  </div>
+
+)}
 
       {/* Market Movers */}
 
