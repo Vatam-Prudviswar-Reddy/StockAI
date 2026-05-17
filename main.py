@@ -139,92 +139,71 @@ def trending_stocks():
 # MARKET MOVERS
 
 @app.get("/market-movers")
-
 def market_movers():
 
-    stocks = [
+    try:
 
-        "RELIANCE.NS",
-        "TCS.NS",
-        "INFY.NS",
-        "HDFCBANK.NS",
-        "SBIN.NS",
-        "ITC.NS",
-        "LT.NS",
-        "BHARTIARTL.NS",
-        "AXISBANK.NS",
-        "TATAMOTORS.NS"
-    ]
+        stocks = [
 
-    gainers = []
-    losers = []
+            ("RELIANCE.NS", "Reliance"),
+            ("TCS.NS", "TCS"),
+            ("INFY.NS", "Infosys"),
+            ("HDFCBANK.NS", "HDFC Bank"),
+            ("ICICIBANK.NS", "ICICI Bank")
 
-    for ticker in stocks:
+        ]
 
-        stock = yf.Ticker(ticker)
+        data = []
 
-        hist = stock.history(period="2d")
+        for symbol, company in stocks:
 
-        if hist.empty:
-            continue
+            stock = yf.Ticker(symbol)
 
-        latest = hist["Close"].iloc[-1]
+            hist = stock.history(period="2d")
 
-        previous = hist["Close"].iloc[-2]
+            if len(hist) < 2:
+                continue
 
-        change_percent = round(
+            prev_close = hist["Close"].iloc[-2]
 
-            ((latest - previous) / previous) * 100,
+            current = hist["Close"].iloc[-1]
 
-            2
-        )
+            change = round(
+                ((current - prev_close) / prev_close) * 100,
+                2
+            )
 
-        company_name = stock.info.get(
+            data.append({
 
-            "longName",
+                "ticker": symbol,
+                "company": company,
+                "change": change
 
-            ticker
-        )
+            })
 
-        data = {
+        gainers = sorted(
+            data,
+            key=lambda x: x["change"],
+            reverse=True
+        )[:5]
 
-            "company": company_name,
+        losers = sorted(
+            data,
+            key=lambda x: x["change"]
+        )[:5]
 
-            "change": change_percent,
+        return {
 
-            "ticker": ticker
+            "gainers": gainers,
+            "losers": losers
+
         }
 
-        if change_percent >= 0:
+    except Exception as e:
 
-            gainers.append(data)
-
-        else:
-
-            losers.append(data)
-
-    gainers = sorted(
-
-        gainers,
-
-        key=lambda x: x["change"],
-
-        reverse=True
-    )
-
-    losers = sorted(
-
-        losers,
-
-        key=lambda x: x["change"]
-    )
-
-    return {
-
-        "gainers": gainers[:5],
-
-        "losers": losers[:5]
-    }
+        return {
+            "error": str(e)
+        }
 
 # STOCK DETAILS
 
