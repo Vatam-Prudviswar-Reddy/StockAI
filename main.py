@@ -2,6 +2,7 @@ from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
 import yfinance as yf
+import requests
 import feedparser
 
 app = FastAPI()
@@ -93,55 +94,6 @@ def search_stock(query: str):
 
 def trending_stocks():
 
-    trending = [
-
-        "RELIANCE.NS",
-        "INFY.NS",
-        "SBIN.NS",
-        "BHARTIARTL.NS",
-        "TCS.NS"
-    ]
-
-    result = []
-
-    for ticker in trending:
-
-        stock = yf.Ticker(ticker)
-
-        hist = stock.history(period="5d")
-
-        if hist.empty:
-            continue
-
-        latest = hist["Close"].iloc[-1]
-
-        previous = hist["Close"].iloc[-2]
-
-        change = round(
-            ((latest - previous) / previous) * 100,
-            2
-        )
-
-        result.append({
-
-            "ticker": ticker,
-
-            "name": stock.info.get(
-                "longName",
-                ticker
-            ),
-
-            "change": change
-        })
-
-    return result
-
-# MARKET MOVERS
-
-@app.get("/market-movers")
-
-def market_movers():
-
     try:
 
         stocks = [
@@ -165,11 +117,21 @@ def market_movers():
             "ULTRACEMCO.NS",
             "POWERGRID.NS",
             "BAJFINANCE.NS",
-            "HCLTECH.NS"
+            "HCLTECH.NS",
+            "ADANIENT.NS",
+            "ADANIPORTS.NS",
+            "NTPC.NS",
+            "ONGC.NS",
+            "TECHM.NS",
+            "TITAN.NS",
+            "NESTLEIND.NS",
+            "COALINDIA.NS",
+            "INDUSINDBK.NS",
+            "JSWSTEEL.NS"
 
         ]
 
-        market_data = []
+        result = []
 
         for ticker in stocks:
 
@@ -186,34 +148,168 @@ def market_movers():
 
                 previous = hist["Close"].iloc[-2]
 
-                change_percent = round(
+                change = round(
 
                     ((latest - previous) / previous) * 100,
 
                     2
                 )
 
-                market_data.append({
+                volume = hist["Volume"].iloc[-1]
+
+                result.append({
 
                     "ticker": ticker,
 
-                    "company": stock.info.get(
+                    "name": stock.info.get(
                         "longName",
                         ticker
                     ),
 
-                    "change": change_percent
+                    "change": change,
+
+                    "volume": int(volume)
 
                 })
 
             except:
                 continue
 
-        # Dynamic Sorting
+        # Live ranking logic
 
+        trending = sorted(
+
+            result,
+
+            key=lambda x: (
+                abs(x["change"]),
+                x["volume"]
+            ),
+
+            reverse=True
+
+        )[:6]
+
+        return trending
+
+    except Exception as e:
+
+        return {
+
+            "error": str(e)
+        }
+
+# MARKET MOVERS
+
+@app.get("/market-movers")
+
+def market_movers():
+
+    try:
+
+        headers = {
+
+            "User-Agent":
+            "Mozilla/5.0"
+
+        }
+
+        session = requests.Session()
+
+        # Visit NSE first
+        session.get(
+            "https://www.nseindia.com",
+            headers=headers
+        )
+
+        # Top Gainers
+        gainers_url = (
+            "https://www.nseindia.com/api/"
+            "live-analysis-variations?index=gainers"
+        )
+
+        gainers_response = session.get(
+            gainers_url,
+            headers=headers
+        )
+
+        gainers_data = gainers_response.json()
+
+        gainers = []
+
+        for item in gainers_data["NIFTY"][:5]:
+
+            gainers.append({
+
+                "company":
+                item["symbol"],
+
+                "change":
+                round(
+                    item["percentChange"],
+                    2
+                ),
+
+                "ticker":
+                item["symbol"] + ".NS"
+            })
+
+        # Top Losers
+        losers_url = (
+            "https://www.nseindia.com/api/"
+            "live-analysis-variations?index=losers"
+        )
+
+        losers_response = session.get(
+            losers_url,
+            headers=headers
+        )
+
+        losers_data = losers_response.json()
+
+        losers = []
+
+        for item in losers_data["NIFTY"][:5]:
+
+            losers.append({
+
+                "company":
+                item["symbol"],
+
+                "change":
+                round(
+                    item["percentChange"],
+                    2
+                ),
+
+                "ticker":
+                item["symbol"] + ".NS"
+            })
+
+        return {
+
+            "gainers": gainers,
+
+            "losers": losers
+        }
+
+    except Exception as e:
+
+        return {
+
+            "error": str(e)
+        }
+
+        # Dynamic Sorting
         gainers = sorted(
 
-            market_data,
+            [
+
+                stock for stock in market_data
+
+                if stock["change"] > 0
+
+            ],
 
             key=lambda x: x["change"],
 
@@ -223,7 +319,13 @@ def market_movers():
 
         losers = sorted(
 
-            market_data,
+            [
+
+                stock for stock in market_data
+
+                if stock["change"] < 0
+
+            ],
 
             key=lambda x: x["change"]
 
