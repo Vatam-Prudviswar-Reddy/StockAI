@@ -135,20 +135,44 @@ useEffect(() => {
 
   // Trending Stocks
 
-  useEffect(() => {
+useEffect(() => {
 
-    fetch(
-      "https://stockai-backend-xzm4.onrender.com/trending"
-    )
-      .then((res) => res.json())
+  const fetchTrending = async () => {
 
-      .then((data) => {
+    try {
 
-        setTrendingStocks(data);
+      const response = await fetch(
 
-      });
+        "https://stockai-backend-xzm4.onrender.com/trending"
 
-  }, []);
+      );
+
+      const data = await response.json();
+
+      if (
+
+        !Array.isArray(data)
+
+      ) {
+
+        setTrendingStocks([]);
+
+        return;
+      }
+
+      setTrendingStocks(data);
+
+    } catch {
+
+      setTrendingStocks([]);
+
+    }
+
+  };
+
+  fetchTrending();
+
+}, []);
 
   // Live Time
 
@@ -574,62 +598,53 @@ useEffect(() => {
 
       {/* Trending */}
 
-      <div className="trending-section">
+      <div className="trending-container">
 
-        <h2 className="section-title">
+      {Array.isArray(trendingStocks) &&
+      trendingStocks.map(
+      (stock, index) => (
 
-          🔥 Trending Stocks
+      <div
+        key={index}
 
-        </h2>
+        className="trending-card"
 
-        <div className="trending-container">
+        onClick={() =>
+          fetchStock(
+            stock.ticker,
+            stock.name
+          )
+        }
+      >
 
-          {trendingStocks.map(
-            (stock, index) => (
+        <h3>
 
-              <div
-                key={index}
+          {stock.name}
 
-                className="trending-card"
+        </h3>
 
-                onClick={() =>
-                  fetchStock(
-                    stock.ticker,
-                    stock.name
-                  )
-                }
-              >
+        <p
+          className={
+            stock.change >= 0
+              ? "positive"
+              : "negative"
+          }
+        >
 
-                <h3>
+          {stock.change >= 0
+            ? "+"
+            : ""}
 
-                  {stock.name}
+          {stock.change}%
 
-                </h3>
-
-                <p
-                  className={
-                    stock.change >= 0
-                      ? "positive"
-                      : "negative"
-                  }
-                >
-
-                  {stock.change >= 0
-                    ? "+"
-                    : ""}
-
-                  {stock.change}%
-
-                </p>
-
-              </div>
-
-            )
-          )}
-
-        </div>
+        </p>
 
       </div>
+
+    )
+  )}
+
+</div>
 
       {marketMovers.error && (
 
@@ -659,7 +674,8 @@ useEffect(() => {
 
           </h2>
 
-          {marketMovers.gainers.map(
+          {Array.isArray(marketMovers.gainers) &&
+          marketMovers.gainers.map(
             (stock, index) => (
 
               <div
@@ -704,7 +720,8 @@ useEffect(() => {
 
           </h2>
 
-          {marketMovers.losers.map(
+          {Array.isArray(marketMovers.losers) &&
+            marketMovers.losers.map(
             (stock, index) => (
 
               <div
@@ -808,7 +825,8 @@ useEffect(() => {
 
       {/* Stock Details */}
 
-      {stockData && (
+      {stockData &&
+      Array.isArray(stockData.history) && (
 
       <div className="main-layout">
 
@@ -926,57 +944,44 @@ useEffect(() => {
 
         {/* News */}
 
-        <div className="side-chart">
+        <div className="news-section">
 
-          <h2>
+  {Array.isArray(stockData.news) &&
+  stockData.news.map(
+    (news, index) => (
 
-            Latest News 📰
+      <div
+        key={index}
 
-          </h2>
+        className="news-box"
+      >
 
-          <div className="news-section">
+        <p>
 
-            {stockData.news.map(
-              (news, index) => (
+          {news.title}
 
-                <div
-                  key={index}
+        </p>
 
-                  className="news-box"
-                >
+        <a
+          href={news.link}
 
-                  <p>
+          target="_blank"
 
-                    {news.title}
+          rel="noreferrer"
 
-                  </p>
+          className="read-more"
+        >
 
-                  <a
-                    href={news.link}
+          Read More →
 
-                    target="_blank"
-
-                    rel="noreferrer"
-
-                    className="read-more"
-                  >
-
-                    Read More →
-
-                  </a>
-
-                </div>
-
-              )
-            )}
-
-          </div>
-
-        </div>
+        </a>
 
       </div>
 
-      )}
+    )
+  )}
+
+</div>
 
             {/* Contact Section */}
 
