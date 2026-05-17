@@ -3,12 +3,19 @@ import "./App.css";
 
 function App() {
 
-  const [darkMode, setDarkMode] = useState(true);
+  const [darkMode, setDarkMode] =
+    useState(true);
 
   const [currentTime, setCurrentTime] =
     useState(new Date());
 
   const [trendingStocks, setTrendingStocks] =
+    useState([]);
+
+  const [query, setQuery] =
+    useState("");
+
+  const [suggestions, setSuggestions] =
     useState([]);
 
   // Live Time
@@ -56,6 +63,41 @@ function App() {
     fetchTrending();
 
   }, []);
+
+  // Search Companies
+
+  const searchCompanies = async (
+    value
+  ) => {
+
+    setQuery(value);
+
+    if (value.length > 1) {
+
+      try {
+
+        const response = await fetch(
+          `https://stockai-backend-xzm4.onrender.com/search/${value}`
+        );
+
+        const data =
+          await response.json();
+
+        setSuggestions(data);
+
+      } catch (error) {
+
+        console.log(error);
+
+      }
+
+    } else {
+
+      setSuggestions([]);
+
+    }
+
+  };
 
   // Indian Time
 
@@ -134,6 +176,50 @@ function App() {
         <div className="market-open">
           🟢 Market Open
         </div>
+
+      </div>
+
+      {/* Search Section */}
+
+      <div className="search-container">
+
+        <input
+          type="text"
+          placeholder="Search NSE/BSE Stocks"
+
+          value={query}
+
+          onChange={(e) =>
+            searchCompanies(
+              e.target.value
+            )
+          }
+        />
+
+        {/* Suggestions */}
+
+        {suggestions.length > 0 && (
+
+          <div className="suggestions">
+
+            {suggestions.map(
+              (item, index) => (
+
+                <div
+                  key={index}
+                  className="suggestion-item"
+                >
+
+                  {item.name}
+
+                </div>
+
+              )
+            )}
+
+          </div>
+
+        )}
 
       </div>
 
