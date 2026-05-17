@@ -139,62 +139,100 @@ def trending_stocks():
 # MARKET MOVERS
 
 @app.get("/market-movers")
+
 def market_movers():
 
     try:
 
         stocks = [
 
-            ("RELIANCE.NS", "Reliance"),
-            ("TCS.NS", "TCS"),
-            ("INFY.NS", "Infosys"),
-            ("HDFCBANK.NS", "HDFC Bank"),
-            ("ICICIBANK.NS", "ICICI Bank")
+            "RELIANCE.NS",
+            "TCS.NS",
+            "INFY.NS",
+            "HDFCBANK.NS",
+            "SBIN.NS",
+            "ITC.NS",
+            "LT.NS",
+            "BHARTIARTL.NS",
+            "AXISBANK.NS",
+            "TATAMOTORS.NS",
+            "ICICIBANK.NS",
+            "KOTAKBANK.NS",
+            "ASIANPAINT.NS",
+            "MARUTI.NS",
+            "SUNPHARMA.NS",
+            "WIPRO.NS",
+            "ULTRACEMCO.NS",
+            "POWERGRID.NS",
+            "BAJFINANCE.NS",
+            "HCLTECH.NS"
 
         ]
 
-        data = []
+        market_data = []
 
-        for symbol, company in stocks:
+        for ticker in stocks:
 
-            stock = yf.Ticker(symbol)
+            try:
 
-            hist = stock.history(period="2d")
+                stock = yf.Ticker(ticker)
 
-            if len(hist) < 2:
+                hist = stock.history(period="5d")
+
+                if hist.empty or len(hist) < 2:
+                    continue
+
+                latest = hist["Close"].iloc[-1]
+
+                previous = hist["Close"].iloc[-2]
+
+                change_percent = round(
+
+                    ((latest - previous) / previous) * 100,
+
+                    2
+                )
+
+                market_data.append({
+
+                    "ticker": ticker,
+
+                    "company": stock.info.get(
+                        "longName",
+                        ticker
+                    ),
+
+                    "change": change_percent
+
+                })
+
+            except:
                 continue
 
-            prev_close = hist["Close"].iloc[-2]
-
-            current = hist["Close"].iloc[-1]
-
-            change = round(
-                ((current - prev_close) / prev_close) * 100,
-                2
-            )
-
-            data.append({
-
-                "ticker": symbol,
-                "company": company,
-                "change": change
-
-            })
+        # Dynamic Sorting
 
         gainers = sorted(
-            data,
+
+            market_data,
+
             key=lambda x: x["change"],
+
             reverse=True
+
         )[:5]
 
         losers = sorted(
-            data,
+
+            market_data,
+
             key=lambda x: x["change"]
+
         )[:5]
 
         return {
 
             "gainers": gainers,
+
             "losers": losers
 
         }
@@ -202,6 +240,7 @@ def market_movers():
     except Exception as e:
 
         return {
+
             "error": str(e)
         }
 
