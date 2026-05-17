@@ -1,4 +1,8 @@
-import React, { useState, useEffect } from "react";
+import React, {
+  useState,
+  useEffect
+} from "react";
+
 import "./App.css";
 
 function App() {
@@ -18,6 +22,9 @@ function App() {
   const [suggestions, setSuggestions] =
     useState([]);
 
+  const [selectedStock, setSelectedStock] =
+    useState(null);
+
   // Live Time
 
   useEffect(() => {
@@ -32,7 +39,7 @@ function App() {
 
   }, []);
 
-  // Trending Stocks
+  // Fetch Trending Stocks
 
   useEffect(() => {
 
@@ -44,7 +51,8 @@ function App() {
           "https://stockai-backend-xzm4.onrender.com/trending"
         );
 
-        const data = await response.json();
+        const data =
+          await response.json();
 
         if (Array.isArray(data)) {
 
@@ -77,7 +85,9 @@ function App() {
       try {
 
         const response = await fetch(
+
           `https://stockai-backend-xzm4.onrender.com/search/${value}`
+
         );
 
         const data =
@@ -94,6 +104,33 @@ function App() {
     } else {
 
       setSuggestions([]);
+
+    }
+
+  };
+
+  // Fetch Stock Details
+
+  const fetchStockDetails = async (
+    symbol
+  ) => {
+
+    try {
+
+      const response = await fetch(
+
+        `https://stockai-backend-xzm4.onrender.com/stock/${symbol}`
+
+      );
+
+      const data =
+        await response.json();
+
+      setSelectedStock(data);
+
+    } catch (error) {
+
+      console.log(error);
 
     }
 
@@ -124,11 +161,14 @@ function App() {
       <div className="navbar">
 
         <div className="logo">
+
           📈 StockAI
+
         </div>
 
         <button
           className="theme-toggle"
+
           onClick={() =>
             setDarkMode(!darkMode)
           }
@@ -142,25 +182,31 @@ function App() {
 
       </div>
 
-      {/* Hero Section */}
+      {/* Hero */}
 
       <div className="hero-section">
 
         <h1 className="hero-title">
+
           Track Stocks Smarter with AI 📈
+
         </h1>
 
         <h2 className="typewriter">
+
           Analyze Trends 📊 •
           Track Market Live 🚀 •
           Invest Smarter 💰
+
         </h2>
 
         <p className="hero-subtitle">
+
           Real-time market insights,
           AI recommendations,
           stock analytics &
           live updates.
+
         </p>
 
       </div>
@@ -170,21 +216,108 @@ function App() {
       <div className="market-status-bar">
 
         <div>
-          🇮🇳 Indian Time: {indianTime}
+
+          🇮🇳 Indian Time:
+          {" "}
+          {indianTime}
+
         </div>
 
         <div className="market-open">
+
           🟢 Market Open
+
         </div>
 
       </div>
 
-      {/* Search Section */}
+      {/* Market Info */}
+
+      <div className="market-info-section">
+
+        <h2 className="section-title">
+
+          📅 Market Information
+
+        </h2>
+
+        <div className="market-info-grid">
+
+          <div className="info-card">
+
+            <h3>
+
+              🕘 Opening Time
+
+            </h3>
+
+            <p>
+
+              9:15 AM IST
+
+            </p>
+
+          </div>
+
+          <div className="info-card">
+
+            <h3>
+
+              🕒 Closing Time
+
+            </h3>
+
+            <p>
+
+              3:30 PM IST
+
+            </p>
+
+          </div>
+
+          <div className="info-card">
+
+            <h3>
+
+              📈 Trading Days
+
+            </h3>
+
+            <p>
+
+              Monday - Friday
+
+            </p>
+
+          </div>
+
+          <div className="info-card">
+
+            <h3>
+
+              🌙 Weekend
+
+            </h3>
+
+            <p>
+
+              Saturday & Sunday Closed
+
+            </p>
+
+          </div>
+
+        </div>
+
+      </div>
+
+      {/* Search */}
 
       <div className="search-container">
 
         <input
           type="text"
+
           placeholder="Search NSE/BSE Stocks"
 
           value={query}
@@ -207,7 +340,20 @@ function App() {
 
                 <div
                   key={index}
+
                   className="suggestion-item"
+
+                  onClick={() => {
+
+                    fetchStockDetails(
+                      item.symbol
+                    );
+
+                    setSuggestions([]);
+
+                    setQuery(item.name);
+
+                  }}
                 >
 
                   {item.name}
@@ -223,12 +369,70 @@ function App() {
 
       </div>
 
+      {/* Selected Stock */}
+
+      {selectedStock && (
+
+      <div className="stock-details-card">
+
+        <h2>
+
+          {selectedStock.company}
+
+        </h2>
+
+        <p>
+
+          💰 Current Price:
+          ₹{selectedStock.current_price}
+
+        </p>
+
+        <p>
+
+          📊 Sector:
+          {selectedStock.sector}
+
+        </p>
+
+        <p>
+
+          📈 Predicted Return:
+          {selectedStock.return_percent}%
+
+        </p>
+
+        <button
+          className="buy-btn"
+
+          onClick={() => {
+
+            window.open(
+
+              `https://groww.in/stocks/${selectedStock.symbol}`,
+
+              "_blank"
+            );
+
+          }}
+        >
+
+          Buy on Groww 🚀
+
+        </button>
+
+      </div>
+
+      )}
+
       {/* Trending Stocks */}
 
       <div className="trending-section">
 
         <h2 className="section-title">
+
           🔥 Trending Stocks
+
         </h2>
 
         <div className="trending-container">
@@ -239,11 +443,14 @@ function App() {
 
               <div
                 key={index}
+
                 className="trending-card"
               >
 
                 <h3>
+
                   {stock.name}
+
                 </h3>
 
                 <p
@@ -271,12 +478,14 @@ function App() {
 
       </div>
 
-      {/* Contact Section */}
+      {/* Contact */}
 
       <div className="contact-section">
 
         <h2>
+
           📬 Connect With Me
+
         </h2>
 
         <div className="contact-links">
@@ -321,13 +530,17 @@ function App() {
       <div className="feedback-section">
 
         <h2>
+
           💬 Feedback
+
         </h2>
 
         <p>
+
           Found a bug?
           Have suggestions?
           Help improve StockAI.
+
         </p>
 
         <a
@@ -350,7 +563,9 @@ function App() {
         Built by{" "}
 
         <span>
+
           Vatam Prudvi Swar
+
         </span>
 
         • Powered by Yahoo Finance
