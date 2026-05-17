@@ -944,44 +944,72 @@ useEffect(() => {
 
         {/* News */}
 
-        <div className="news-section">
+        {/* Buy */}
 
-  {Array.isArray(stockData.news) &&
-  stockData.news.map(
-    (news, index) => (
-
-      <div
-        key={index}
-
-        className="news-box"
-      >
-
-        <p>
-
-          {news.title}
-
-        </p>
-
-        <a
-          href={news.link}
-
-          target="_blank"
-
-          rel="noreferrer"
-
-          className="read-more"
-        >
-
-          Read More →
-
-        </a>
-
-      </div>
-
-    )
-  )}
+<button
+  className="buy-btn"
+>
+...
+</button>
 
 </div>
+
+{/* News */}
+
+<div className="side-chart">
+
+  <h2>
+
+    Latest News 📰
+
+  </h2>
+
+  <div className="news-section">
+
+    {Array.isArray(stockData.news) &&
+    stockData.news.map(
+      (news, index) => (
+
+        <div
+          key={index}
+
+          className="news-box"
+        >
+
+          <p>
+
+            {news.title}
+
+          </p>
+
+          <a
+            href={news.link}
+
+            target="_blank"
+
+            rel="noreferrer"
+
+            className="read-more"
+          >
+
+            Read More →
+
+          </a>
+
+        </div>
+
+      )
+    )}
+
+  </div>
+
+</div>
+
+</div>
+
+)}
+
+{/* Contact Section */}
 
             {/* Contact Section */}
 
