@@ -4,17 +4,60 @@ import "./App.css";
 function App() {
 
   const [darkMode, setDarkMode] = useState(true);
-  const [currentTime, setCurrentTime] = useState(new Date());
+
+  const [currentTime, setCurrentTime] =
+    useState(new Date());
+
+  const [trendingStocks, setTrendingStocks] =
+    useState([]);
+
+  // Live Time
 
   useEffect(() => {
 
     const timer = setInterval(() => {
+
       setCurrentTime(new Date());
+
     }, 1000);
 
     return () => clearInterval(timer);
 
   }, []);
+
+  // Trending Stocks
+
+  useEffect(() => {
+
+    const fetchTrending = async () => {
+
+      try {
+
+        const response = await fetch(
+          "https://stockai-backend-xzm4.onrender.com/trending"
+        );
+
+        const data = await response.json();
+
+        if (Array.isArray(data)) {
+
+          setTrendingStocks(data);
+
+        }
+
+      } catch (error) {
+
+        console.log(error);
+
+      }
+
+    };
+
+    fetchTrending();
+
+  }, []);
+
+  // Indian Time
 
   const indianTime =
     currentTime.toLocaleTimeString(
@@ -33,6 +76,8 @@ function App() {
           : "container light"
       }
     >
+
+      {/* Navbar */}
 
       <div className="navbar">
 
@@ -55,6 +100,8 @@ function App() {
 
       </div>
 
+      {/* Hero Section */}
+
       <div className="hero-section">
 
         <h1 className="hero-title">
@@ -76,6 +123,8 @@ function App() {
 
       </div>
 
+      {/* Market Status */}
+
       <div className="market-status-bar">
 
         <div>
@@ -88,6 +137,128 @@ function App() {
 
       </div>
 
+      {/* Trending Stocks */}
+
+      <div className="trending-section">
+
+        <h2 className="section-title">
+          🔥 Trending Stocks
+        </h2>
+
+        <div className="trending-container">
+
+          {Array.isArray(trendingStocks) &&
+          trendingStocks.map(
+            (stock, index) => (
+
+              <div
+                key={index}
+                className="trending-card"
+              >
+
+                <h3>
+                  {stock.name}
+                </h3>
+
+                <p
+                  className={
+                    stock.change >= 0
+                      ? "positive"
+                      : "negative"
+                  }
+                >
+
+                  {stock.change >= 0
+                    ? "+"
+                    : ""}
+
+                  {stock.change}%
+
+                </p>
+
+              </div>
+
+            )
+          )}
+
+        </div>
+
+      </div>
+
+      {/* Contact Section */}
+
+      <div className="contact-section">
+
+        <h2>
+          📬 Connect With Me
+        </h2>
+
+        <div className="contact-links">
+
+          <a
+            href="https://www.linkedin.com/in/vatam-prudvi-swar-reddy-b52653297/"
+            target="_blank"
+            rel="noreferrer"
+            className="icon-btn linkedin-contact"
+          >
+
+            💼
+
+          </a>
+
+          <a
+            href="https://www.instagram.com/its_prudvi/"
+            target="_blank"
+            rel="noreferrer"
+            className="icon-btn insta-contact"
+          >
+
+            📸
+
+          </a>
+
+          <a
+            href="mailto:vatamprudvi@gmail.com"
+            className="icon-btn email-contact"
+          >
+
+            ✉️
+
+          </a>
+
+        </div>
+
+      </div>
+
+      {/* Feedback */}
+
+      <div className="feedback-section">
+
+        <h2>
+          💬 Feedback
+        </h2>
+
+        <p>
+          Found a bug?
+          Have suggestions?
+          Help improve StockAI.
+        </p>
+
+        <a
+          href="https://forms.gle/iD3oJeHBvXZdsbng6"
+          target="_blank"
+          rel="noreferrer"
+          className="feedback-btn"
+        >
+
+          Give Feedback 🚀
+
+        </a>
+
+      </div>
+
+      {/* Footer */}
+
       <footer className="footer">
 
         Built by{" "}
@@ -95,6 +266,8 @@ function App() {
         <span>
           Vatam Prudvi Swar
         </span>
+
+        • Powered by Yahoo Finance
 
       </footer>
 
