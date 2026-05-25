@@ -4,10 +4,15 @@ from fastapi.middleware.cors import CORSMiddleware
 import yfinance as yf
 import requests
 import feedparser
+import pytz
+
+from datetime import datetime
 
 app = FastAPI()
 
+# =========================
 # CORS
+# =========================
 
 app.add_middleware(
     CORSMiddleware,
@@ -17,7 +22,9 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
+# =========================
 # STOCK DATABASE
+# =========================
 
 stock_database = [
 
@@ -70,9 +77,12 @@ stock_database = [
         "symbol": "AXISBANK.NS",
         "name": "Axis Bank Limited"
     }
+
 ]
 
+# =========================
 # SEARCH API
+# =========================
 
 @app.get("/search/{query}")
 
@@ -88,7 +98,9 @@ def search_stock(query: str):
 
     return results
 
+# =========================
 # TRENDING STOCKS
+# =========================
 
 @app.get("/trending")
 
@@ -175,8 +187,6 @@ def trending_stocks():
             except:
                 continue
 
-        # Live ranking logic
-
         trending = sorted(
 
             result,
@@ -199,7 +209,9 @@ def trending_stocks():
             "error": str(e)
         }
 
-# MARKET MOVERS
+# =========================
+# LIVE TOP GAINERS & LOSERS
+# =========================
 
 @app.get("/market-movers")
 
@@ -207,135 +219,107 @@ def market_movers():
 
     try:
 
-        headers = {
+        # FETCH LIVE NIFTY50 STOCKS
 
-            "User-Agent":
-            "Mozilla/5.0"
-
-        }
-
-        session = requests.Session()
-
-        # Visit NSE first
-        session.get(
-            "https://www.nseindia.com",
-            headers=headers
+        nifty_url = (
+            "https://archives.nseindia.com/content/indices/ind_nifty50list.csv"
         )
 
-        # Top Gainers
-        gainers_url = (
-            "https://www.nseindia.com/api/"
-            "live-analysis-variations?index=gainers"
-        )
+        response = requests.get(nifty_url)
 
-        gainers_response = session.get(
-            gainers_url,
-            headers=headers
-        )
+        csv_data = response.text.splitlines()
 
-        gainers_data = gainers_response.json()
+        stocks = []
 
-        gainers = []
+        # SKIP HEADER
 
-        for item in gainers_data["NIFTY"][:5]:
+        for line in csv_data[1:]:
 
-            gainers.append({
+            try:
 
-                "company":
-                item["symbol"],
+                columns = line.split(",")
 
-                "change":
-                round(
-                    item["percentChange"],
+                symbol = columns[2]
+
+                stocks.append(
+                    symbol + ".NS"
+                )
+
+            except:
+                continue
+
+        market_data = []
+
+        for ticker in stocks:
+
+            try:
+
+                stock = yf.Ticker(ticker)
+
+                hist = stock.history(period="2d")
+
+                if hist.empty or len(hist) < 2:
+                    continue
+
+                latest = hist["Close"].iloc[-1]
+
+                previous = hist["Close"].iloc[-2]
+
+                change = round(
+
+                    ((latest - previous) / previous) * 100,
+
                     2
-                ),
+                )
 
-                "ticker":
-                item["symbol"] + ".NS"
-            })
+                company_name = stock.info.get(
+                    "shortName",
+                    ticker.replace(".NS", "")
+                )
 
-        # Top Losers
-        losers_url = (
-            "https://www.nseindia.com/api/"
-            "live-analysis-variations?index=losers"
-        )
+                market_data.append({
 
-        losers_response = session.get(
-            losers_url,
-            headers=headers
-        )
+                    "company":
+                    company_name,
 
-        losers_data = losers_response.json()
+                    "change":
+                    change,
 
-        losers = []
+                    "ticker":
+                    ticker
 
-        for item in losers_data["NIFTY"][:5]:
+                })
 
-            losers.append({
+            except:
+                continue
 
-                "company":
-                item["symbol"],
+        # TOP GAINERS
 
-                "change":
-                round(
-                    item["percentChange"],
-                    2
-                ),
-
-                "ticker":
-                item["symbol"] + ".NS"
-            })
-
-        return {
-
-            "gainers": gainers,
-
-            "losers": losers
-        }
-
-    except Exception as e:
-
-        return {
-
-            "error": str(e)
-        }
-
-        # Dynamic Sorting
         gainers = sorted(
 
-            [
-
-                stock for stock in market_data
-
-                if stock["change"] > 0
-
-            ],
+            market_data,
 
             key=lambda x: x["change"],
 
             reverse=True
 
-        )[:5]
+        )[:7]
+
+        # TOP LOSERS
 
         losers = sorted(
 
-            [
-
-                stock for stock in market_data
-
-                if stock["change"] < 0
-
-            ],
+            market_data,
 
             key=lambda x: x["change"]
 
-        )[:5]
+        )[:7]
 
         return {
 
-            "gainers": gainers,
+            "top_gainers": gainers,
 
-            "losers": losers
+            "top_losers": losers
 
         }
 
@@ -344,9 +328,131 @@ def market_movers():
         return {
 
             "error": str(e)
+
         }
 
+# =========================
+# MARKET HOLIDAYS
+# =========================
+
+@app.get("/market-holidays")
+
+def market_holidays():
+
+    holidays = [
+
+        {
+
+            "name": "Republic Day",
+
+            "date": "26 Jan"
+
+        },
+
+        {
+
+            "name": "Holi",
+
+            "date": "14 Mar"
+
+        },
+
+        {
+
+            "name": "Independence Day",
+
+            "date": "15 Aug"
+
+        },
+
+        {
+
+            "name": "Gandhi Jayanti",
+
+            "date": "2 Oct"
+
+        },
+
+        {
+
+            "name": "Diwali",
+
+            "date": "21 Oct"
+
+        },
+
+        {
+
+            "name": "Christmas",
+
+            "date": "25 Dec"
+
+        }
+
+    ]
+
+    return holidays
+
+# =========================
+# MARKET STATUS
+# =========================
+
+@app.get("/market-status")
+
+def market_status():
+
+    india = pytz.timezone(
+        "Asia/Kolkata"
+    )
+
+    now = datetime.now(india)
+
+    hour = now.hour
+
+    minute = now.minute
+
+    day = now.weekday()
+
+    is_weekend = day >= 5
+
+    market_open = (
+
+        not is_weekend and
+
+        (
+            (
+                hour > 9 or
+                (
+                    hour == 9 and
+                    minute >= 15
+                )
+            )
+
+            and
+
+            (
+                hour < 15 or
+                (
+                    hour == 15 and
+                    minute <= 30
+                )
+            )
+        )
+    )
+
+    return {
+
+        "market_open": market_open,
+
+        "time": now.strftime(
+            "%I:%M:%S %p"
+        )
+
+    }
+
+# =========================
 # STOCK DETAILS
+# =========================
 
 @app.get("/stock/{ticker}")
 
@@ -388,7 +494,7 @@ def get_stock(ticker: str):
 
             risk_level = "High"
 
-        # Graph Data
+        # GRAPH DATA
 
         history_data = []
 
@@ -401,9 +507,10 @@ def get_stock(ticker: str):
 
                 "price":
                 round(row["Close"], 2)
+
             })
 
-        # News
+        # NEWS
 
         news_feed = feedparser.parse(
 
